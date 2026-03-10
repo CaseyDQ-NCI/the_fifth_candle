@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE FIFTH CHAMBER</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0e0b07;
+  --parchment: #f0e8d0;
+  --aged: #d4c4a0;
+  --sepia: #8b6914;
+  --rust: #7a3419;
+  --shadow: #2a1f0e;
+  --glow: #e8c060;
+  --faded: #c4b080;
+  --dark-panel: #1a130a;
+  --candle: #f5d070;
+}
+
+/* MUSIC PLAYER */
+#music-player {
+  position: fixed;
+  bottom: 1.2rem;
+  right: 1.2rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #1a130aee;
+  border: 1px solid #3a2a15;
+  padding: 0.5rem 0.9rem;
+  backdrop-filter: blur(6px);
+}
+
+#music-player::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sepia), transparent);
+}
+
+.music-icon {
+  font-size: 0.9rem;
+  color: var(--sepia);
+  animation: pulse-icon 2s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.music-icon.playing { color: var(--glow); }
+
+.music-label {
+  font-family: 'VT323', monospace;
+  font-size: 0.72rem;
+  color: #6a4a25;
+  letter-spacing: 0.15em;
+  white-space: nowrap;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-btn {
+  background: transparent;
+  border: 1px solid #3a2a15;
+  color: var(--faded);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.music-btn:hover { border-color: var(--sepia); color: var(--glow); }
+
+#music-vol {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 60px;
+  height: 3px;
+  background: #3a2a15;
+  outline: none;
+  cursor: pointer;
+}
+
+#music-vol::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  background: var(--sepia);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#music-vol::-webkit-slider-thumb:hover { background: var(--glow); }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--ink); color:var(--parchment); font-family:'Cormorant Garamond',serif; min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse 50% 60% at 50% 100%,#3d1f0522 0%,transparent 70%),radial-gradient(ellipse 30% 40% at 20% 50%,#2a100322 0%,transparent 60%); animation:fbg 6s ease-in-out infinite alternate; pointer-events:none; z-index:0; }
+@keyframes fbg { 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.8} }
+#app { position:relative; z-index:1; }
+.screen { display:none; min-height:100vh; }
+.screen.active { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; }
+
+/* CANDLES */
+.candle-row { display:flex; gap:2.5rem; margin-bottom:2rem; justify-content:center; }
+.candle { display:flex; flex-direction:column; align-items:center; }
+.flame { width:8px; height:22px; background:radial-gradient(ellipse at 50% 80%,var(--candle),#f09020 50%,transparent 100%); border-radius:50% 50% 20% 20%; animation:fd 1.2s ease-in-out infinite alternate; transform-origin:bottom center; filter:blur(.5px); }
+@keyframes fd { 0%{transform:scaleX(1) skewX(0);height:22px} 40%{transform:scaleX(.85) skewX(-5deg);height:26px} 100%{transform:scaleX(1.1) skewX(5deg);height:20px} }
+.candle-body { width:14px; height:38px; background:linear-gradient(180deg,#f0e8d0,#d4c4a0,#b8a880); border-radius:2px 2px 3px 3px; }
+
+/* TITLE */
+h1.main-title { font-family:'Playfair Display',serif; font-size:clamp(2.5rem,8vw,5.5rem); font-weight:900; color:var(--parchment); letter-spacing:.15em; line-height:1; text-shadow:0 0 60px #e8c06055,2px 2px 0 var(--shadow); }
+.title-sub { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.1rem; color:var(--faded); letter-spacing:.6em; margin-top:.4rem; }
+.intro-scroll { max-width:520px; background:#1a130a; border:1px solid #3a2a15; border-top:3px solid var(--sepia); padding:2rem; margin:1.5rem 0 2rem; font-size:1.05rem; line-height:1.85; color:var(--aged); font-style:italic; text-align:center; position:relative; }
+.intro-scroll::before,.intro-scroll::after { content:'✦'; position:absolute; color:var(--sepia); }
+.intro-scroll::before { top:.8rem; left:1rem; }
+.intro-scroll::after { bottom:.8rem; right:1rem; }
+
+/* BUTTONS */
+.btn-main { font-family:'Playfair Display',serif; font-size:.9rem; font-weight:700; letter-spacing:.25em; padding:1rem 3rem; background:var(--sepia); border:none; color:var(--ink); cursor:pointer; transition:all .3s; text-transform:uppercase; }
+.btn-main:hover { background:var(--glow); transform:translateY(-2px); box-shadow:0 8px 20px #00000066; }
+.btn-sm { font-family:'Playfair Display',serif; font-size:.78rem; font-weight:700; letter-spacing:.2em; padding:.6rem 1.4rem; background:transparent; border:1px solid var(--sepia); color:var(--aged); cursor:pointer; transition:all .25s; text-transform:uppercase; }
+.btn-sm:hover { background:var(--sepia); color:var(--ink); }
+
+/* HUD */
+#game-screen { padding:1.5rem; max-width:860px; width:100%; margin:0 auto; }
+.hud { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #3a2a15; padding-bottom:1rem; margin-bottom:1.5rem; }
+.seal-row { display:flex; gap:10px; }
+.seal { width:28px; height:28px; border:1px solid #3a2a15; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.75rem; color:#3a2a15; transition:all .5s; font-family:'VT323',monospace; }
+.seal.cracked { border-color:var(--sepia); color:var(--glow); background:#3a1a0544; box-shadow:0 0 8px #8b691444; }
+.timer { font-family:'VT323',monospace; font-size:1.8rem; color:var(--glow); letter-spacing:.1em; line-height:1; }
+.timer.danger { color:#e05040; animation:blink .6s step-end infinite; }
+@keyframes blink { 50%{opacity:.3} }
+.room-label { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:.9rem; color:var(--sepia); letter-spacing:.2em; }
+
+/* PUZZLE PANEL */
+.puzzle-panel { background:var(--dark-panel); border:1px solid #3a2a15; padding:2.5rem; position:relative; min-height:420px; }
+.puzzle-panel::before { content:''; position:absolute; top:0; left:10%; right:10%; height:1px; background:linear-gradient(90deg,transparent,var(--sepia),transparent); }
+.puzzle-num { font-family:'VT323',monospace; font-size:.85rem; letter-spacing:.3em; color:#5a3a20; margin-bottom:.3rem; }
+.puzzle-title { font-family:'Playfair Display',serif; font-size:1.6rem; font-style:italic; color:var(--parchment); margin-bottom:.8rem; }
+.puzzle-flavor { font-style:italic; color:var(--faded); line-height:1.75; font-size:1.05rem; margin-bottom:1.5rem; border-left:2px solid #3a2a15; padding-left:1rem; }
+.feedback-line { margin-top:1.2rem; font-family:'VT323',monospace; font-size:1.05rem; letter-spacing:.05em; min-height:1.8rem; padding:.5rem .8rem; border-left:3px solid transparent; transition:all .3s; }
+.feedback-line.ok { color:#7dbf7d; border-color:#4a9a4a; background:#1a3a1a55; }
+.feedback-line.bad { color:#e07060; border-color:#8b3020; background:#3a100a55; }
+.feedback-line.tip { color:var(--glow); border-color:var(--sepia); background:#3a1a0522; }
+
+/* INPUTS */
+.parchment-input { background:#120e06; border:1px solid #4a3a20; color:var(--parchment); font-family:'Cormorant Garamond',serif; font-size:1.2rem; padding:.6rem 1rem; outline:none; transition:border-color .2s; letter-spacing:.1em; }
+.parchment-input:focus { border-color:var(--sepia); }
+.action-row { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-top:1.5rem; }
+
+/* PUZZLE 1 — PORTRAIT GRID */
+.portrait-table { display:flex; flex-direction:column; gap:6px; margin-bottom:1rem; }
+.portrait-row { display:flex; align-items:stretch; gap:6px; }
+.row-label { width:110px; flex-shrink:0; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; font-size:.62rem; font-family:'VT323',monospace; letter-spacing:.12em; color:var(--sepia); text-align:right; line-height:1.3; border-right:1px solid #3a2a15; }
+.portrait-tiles-row { display:flex; gap:6px; flex:1; }
+.portrait-tile { width:80px; height:70px; flex-shrink:0; background:#120e06; border:1px solid #3a2a15; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-family:'Cormorant Garamond',serif; text-align:center; line-height:1.3; padding:4px; cursor:pointer; transition:all .2s; user-select:none; }
+.portrait-tile:hover { border-color:var(--sepia); transform:scale(1.04); }
+.portrait-tile.selected { border-color:var(--glow); background:#3a1a0566; }
+.portrait-tile.wrong-flash { background:#8b202033; border-color:var(--rust); }
+.portrait-tile.highlight { background:#3a1a0588; border-color:var(--glow) !important; color:var(--glow); }
+
+/* PUZZLE 2 — CIPHER */
+.cipher-box { background:#120e06; border:1px solid #3a2a15; padding:1.5rem; margin-bottom:1.5rem; font-style:italic; font-size:1.1rem; line-height:1.8; color:var(--aged); }
+.encoded-word { font-family:'VT323',monospace; font-size:1.6rem; letter-spacing:.25em; color:var(--glow); }
+.ref-grid { background:#0e0a06; border:1px solid #2a1a0a; padding:1rem; max-width:380px; margin-top:1rem; }
+.ref-grid div { font-family:'VT323',monospace; font-size:.8rem; color:#7a5a30; line-height:1.7; }
+
+/* PUZZLE 3 — SCENE */
+.scene-wrap { position:relative; width:100%; max-width:560px; background:#0e0a06; border:1px solid #3a2a15; margin-bottom:1rem; overflow:hidden; }
+.hotspot { position:absolute; cursor:pointer; border:2px solid transparent; border-radius:4px; transition:all .2s; }
+.hotspot:hover { border-color:var(--glow); background:#e8c06011; }
+.hotspot.found { border-color:#7dbf7d; background:#1a3a1a33; }
+.found-count { font-family:'VT323',monospace; font-size:1.2rem; color:var(--glow); letter-spacing:.2em; margin-bottom:.5rem; }
+
+/* PUZZLE 4 — LIBRARY */
+.bookshelf { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; max-width:480px; margin-bottom:1rem; }
+.book { height:100px; border-radius:3px 6px 6px 3px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; border-left:4px solid rgba(0,0,0,.3); user-select:none; }
+.book span { writing-mode:vertical-rl; font-family:'Cormorant Garamond',serif; font-size:.68rem; font-weight:700; letter-spacing:.1em; padding:.3rem; text-align:center; }
+.book:hover { transform:translateY(-6px); box-shadow:0 8px 20px #00000066; }
+.book.selected-book { transform:translateY(-10px); box-shadow:0 12px 24px #00000088,0 0 15px var(--glow); outline:2px solid var(--glow); }
+.book.wrong-book { animation:shake .4s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.order-display { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:.8rem; }
+.order-slot { width:44px; height:44px; background:#120e06; border:1px dashed #4a3a20; display:flex; align-items:center; justify-content:center; font-family:'VT323',monospace; font-size:1.1rem; color:var(--glow); cursor:pointer; transition:all .2s; }
+.order-slot.filled { border-style:solid; border-color:var(--sepia); background:#2a1a0a; }
+.story-panel { background:#1a110a; border:1px solid #3a2a15; border-left:3px solid var(--sepia); padding:1rem 1.2rem; font-style:italic; color:var(--faded); line-height:1.75; font-size:1rem; margin-bottom:1.2rem; }
+
+/* PUZZLE 5 — DOOR */
+.door-symbols { display:flex; gap:12px; margin-bottom:1.5rem; flex-wrap:wrap; }
+.door-sym { width:60px; height:60px; background:#120e06; border:2px solid #3a2a15; display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; transition:all .25s; user-select:none; border-radius:50%; }
+.door-sym:hover { transform:scale(1.08); }
+.door-sym.door-on { box-shadow:0 0 14px currentColor; }
+.door-sym.door-wrong { animation:shake .3s ease; }
+.door-slots { display:flex; gap:10px; margin-bottom:1.5rem; }
+.door-slot { width:56px; height:56px; background:#0e0a06; border:1px solid #3a2a15; display:flex; align-items:center; justify-content:center; font-family:'VT323',monospace; font-size:1rem; color:#3a2a15; transition:all .3s; border-radius:50%; }
+.door-slot.glowing { box-shadow:0 0 10px #e8c06044; }
+
+/* SOLVED OVERLAY */
+.solved-overlay { position:absolute; inset:0; background:#0e0b07f0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2rem; opacity:0; pointer-events:none; transition:opacity .6s; z-index:10; }
+.solved-overlay.show { opacity:1; pointer-events:all; }
+.seal-cracked-text { font-family:'Playfair Display',serif; font-size:1.8rem; font-style:italic; color:var(--glow); text-shadow:0 0 30px #e8c06066; }
+
+/* HUD BOTTOM */
+.hud-bottom { display:flex; justify-content:space-between; align-items:center; margin-top:1.2rem; }
+.attempts-label { font-family:'VT323',monospace; font-size:1rem; color:#5a3a20; letter-spacing:.2em; }
+
+/* WIN */
+#win-screen { text-align:center; }
+.victory-header { font-family:'Playfair Display',serif; font-size:clamp(2.5rem,6vw,4.5rem); font-style:italic; color:var(--parchment); text-shadow:0 0 50px #e8c06055; margin-bottom:.5rem; }
+.victory-sub { font-style:italic; color:var(--faded); font-size:1.1rem; margin-bottom:2rem; letter-spacing:.3em; }
+.stats-grid { display:flex; gap:2.5rem; justify-content:center; flex-wrap:wrap; margin:1.5rem 0; }
+.stat-item .val { font-family:'VT323',monospace; font-size:3rem; color:var(--glow); display:block; line-height:1; }
+.stat-item .lbl { font-style:italic; font-size:.85rem; color:var(--sepia); letter-spacing:.2em; }
+.lore-card { max-width:500px; margin:0 auto 2rem; background:var(--dark-panel); border:1px solid #3a2a15; border-top:2px solid var(--sepia); padding:1.8rem; text-align:left; }
+.lore-card h3 { font-family:'Playfair Display',serif; font-style:italic; font-size:1rem; color:var(--sepia); letter-spacing:.3em; margin-bottom:1.2rem; }
+.lore-card li { list-style:none; color:var(--faded); font-style:italic; font-size:.95rem; line-height:1.7; margin-bottom:.6rem; padding-left:1.5rem; position:relative; }
+.lore-card li::before { content:'✦'; position:absolute; left:0; color:var(--sepia); font-style:normal; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TITLE -->
+<div id="title-screen" class="screen active">
+  <div class="candle-row">
+    <div class="candle"><div class="flame" style="animation-delay:.0s"></div><div class="candle-body"></div></div>
+    <div class="candle"><div class="flame" style="animation-delay:.3s"></div><div class="candle-body"></div></div>
+    <div class="candle"><div class="flame" style="animation-delay:.7s"></div><div class="candle-body"></div></div>
+    <div class="candle"><div class="flame" style="animation-delay:.15s"></div><div class="candle-body"></div></div>
+    <div class="candle"><div class="flame" style="animation-delay:.5s"></div><div class="candle-body"></div></div>
+  </div>
+  <div style="text-align:center;margin-bottom:1.5rem">
+    <h1 class="main-title">THE FIFTH CHAMBER</h1>
+    <div class="title-sub">— an escape of five seals —</div>
+  </div>
+  <div class="intro-scroll">
+    You wake inside a crumbling manor locked behind a door bearing the mark of <em>V</em>.
+    The eccentric scholar Aldric Quint sealed this chamber before he vanished — five riddles,
+    five locks, five candles burning low. Solve them all before the last flame dies.
+  </div>
+  <button class="btn-main" onclick="startGame()">Light the First Candle</button>
+</div>
+
+<!-- GAME -->
+<div id="game-screen" class="screen">
+  <div class="hud">
+    <div class="seal-row" id="seal-row"></div>
+    <div class="room-label" id="room-label">The First Chamber</div>
+    <div class="timer" id="timer">08:00</div>
+  </div>
+  <div class="puzzle-panel" id="puzzle-panel">
+    <div id="puzzle-inner"></div>
+    <div class="solved-overlay" id="solved-overlay">
+      <div style="font-size:2.5rem">🕯️</div>
+      <div class="seal-cracked-text">Seal Broken</div>
+      <div style="font-style:italic;color:var(--faded);font-size:1rem">The chamber whispers its secret...</div>
+      <button class="btn-sm" onclick="nextPuzzle()">Pass Through</button>
+    </div>
+  </div>
+  <div class="hud-bottom">
+    <div class="attempts-label" id="attempt-label">ATTEMPTS: 0</div>
+    <button class="btn-sm" onclick="getHint()">Ask the Ghost</button>
+  </div>
+</div>
+
+<!-- WIN -->
+<div id="win-screen" class="screen">
+  <div class="candle-row" style="gap:2rem;margin-bottom:1.5rem">
+    <div class="candle"><div class="flame" style="animation-delay:.1s"></div><div class="candle-body"></div></div>
+    <div class="candle"><div class="flame" style="animation-delay:.4s"></div><div class="candle-body"></div></div>
+    <div class="candle"><div class="flame" style="animation-delay:.8s"></div><div class="candle-body"></div></div>
+    <div class="candle"><div class="flame" style="animation-delay:.2s"></div><div class="candle-body"></div></div>
+    <div class="candle"><div class="flame" style="animation-delay:.6s"></div><div class="candle-body"></div></div>
+  </div>
+  <div class="victory-header">You Escaped</div>
+  <div class="victory-sub">all five seals yielded to you</div>
+  <div class="stats-grid" id="win-stats"></div>
+  <div class="lore-card">
+    <h3>From Aldric Quint's Journal</h3>
+    <ul id="lore-list"></ul>
+  </div>
+  <button class="btn-main" onclick="startGame()">Return to the Chamber</button>
+</div>
+
+</div>
+<script>
+// ─── STATE ───────────────────────────────────────────────────
+let cur=0, timerSec=480, timerInt=null;
+let attempts=[0,0,0,0,0], hintsUsed=[false,false,false,false,false], totalAtt=0;
+
+const ROOM_NAMES=['The Portrait Gallery','The Cipher Room',"The Raven's Study",'The Forgotten Library','The Final Door'];
+const LORE=[
+  '"Five is not a number. Five is a shape the universe bends itself into." — A.Q.',
+  '"The pentagon appears in starfish, flowers, and the cross-section of an apple. It is inescapable." — A.Q.',
+  '"I encoded this chamber so that only one who truly sees — not calculates — may leave." — A.Q.',
+  '"Five senses. Five fingers. Five acts in every great tragedy. The world counts in five." — A.Q.',
+  '"Whoever reads this has surpassed me. The Fifth Chamber yields at last." — A.Q.',
+];
+const HINTS=[
+  'In each row of five, one item does not belong with its four neighbours. Look for the odd category member — not the oddest-looking one.',
+  'Aldric shifted every letter forward by 5 in the alphabet. To decode, reverse it: shift each letter BACK by 5. K→F, N→I, K→F, Y→T, M→H.',
+  'Five of the objects in the study are secretly about the number five: a candelabra with 5 flames, a five-pointed star on the wall, a five-petalled rose, a die showing five dots, and a hand with five fingers.',
+  'The Latin word for five is QUINT. Find the five books whose first letters spell Q-U-I-N-T and click them in that order.',
+  'The Olympic rings run left to right: Blue, Yellow, Black, Green, Red. Tap them in exactly that order.',
+];
+
+// ─── INIT ─────────────────────────────────────────────────────
+function startGame(){
+  cur=0; timerSec=480; attempts=[0,0,0,0,0];
+  hintsUsed=[false,false,false,false,false]; totalAtt=0;
+  show('game-screen'); buildSeals(); startTimer(); renderPuzzle(0);
+}
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function buildSeals(){
+  const row=document.getElementById('seal-row'); row.innerHTML='';
+  for(let i=0;i<5;i++){const d=document.createElement('div');d.className='seal';d.id=`seal-${i}`;d.textContent='V';row.appendChild(d);}
+}
+function startTimer(){
+  clearInterval(timerInt);
+  timerInt=setInterval(()=>{
+    timerSec--;
+    const el=document.getElementById('timer');
+    el.textContent=`${String(Math.floor(timerSec/60)).padStart(2,'0')}:${String(timerSec%60).padStart(2,'0')}`;
+    el.classList.toggle('danger',timerSec<=90);
+    if(timerSec<=0) clearInterval(timerInt);
+  },1000);
+}
+const PUZZLES=[renderPortrait,renderCipher,renderRaven,renderLibrary,renderDoor];
+function renderPuzzle(idx){
+  document.getElementById('room-label').textContent=ROOM_NAMES[idx];
+  document.getElementById('solved-overlay').classList.remove('show');
+  document.getElementById('attempt-label').textContent=`ATTEMPTS: ${attempts[idx]}`;
+  document.getElementById('puzzle-inner').innerHTML='';
+  PUZZLES[idx](document.getElementById('puzzle-inner'));
+}
+function markSolved(){ document.getElementById(`seal-${cur}`).classList.add('cracked'); document.getElementById('solved-overlay').classList.add('show'); }
+function nextPuzzle(){ cur++; if(cur>=5) finishGame(); else renderPuzzle(cur); }
+function recAtt(){ attempts[cur]++; totalAtt++; document.getElementById('attempt-label').textContent=`ATTEMPTS: ${attempts[cur]}`; }
+function fb(msg,type){
+  let el=document.getElementById('fb');
+  if(!el){el=document.createElement('div');el.id='fb';el.className='feedback-line';document.getElementById('puzzle-inner').appendChild(el);}
+  el.className=`feedback-line ${type}`; el.textContent=msg;
+}
+function getHint(){ hintsUsed[cur]=true; fb('👻 '+HINTS[cur],'tip'); }
+
+// ═══════════════════════════════════════════════════════════════
+//  PUZZLE 1 — THE PORTRAIT GALLERY
+//  25 tiles in 5 rows of 5. Each row is a category with one odd-one-out.
+//  Player selects one tile per row — the one that doesn't belong.
+// ═══════════════════════════════════════════════════════════════
+function renderPortrait(wrap){
+  wrap.innerHTML=`
+    <div class="puzzle-num">CHAMBER I OF V</div>
+    <div class="puzzle-title">The Portrait Gallery</div>
+    <div class="puzzle-flavor">
+      Aldric hung 25 portraits in five groups of five. In each group, 
+      one subject is an impostor — it does not belong with its four siblings.
+      Find and click all five impostors to unseal the gallery.
+    </div>`;
+
+  // Each row: 4 belong to theme, 1 odd-one-out
+  const rows=[
+    { theme:'Seasons', items:['🌸 Spring','☀️ Summer','🍂 Autumn','❄️ Winter','🌊 Tide'], odd:4 },
+    { theme:'Planets', items:['♂ Mars','♀ Venus','☿ Mercury','⊕ Earth','☽ Moon'], odd:4 },
+    { theme:'Card Suits', items:['♠ Spades','♥ Hearts','♦ Diamonds','★ Stars','♣ Clubs'], odd:3 },
+    { theme:'Cardinal Dirs', items:['↑ North','→ East','↓ South','← West','↗ N.East'], odd:4 },
+    { theme:'Classic Elements', items:['🔥 Fire','💧 Water','🌍 Earth','💨 Air','⚡ Lightning'], odd:4 },
+  ];
+
+  window.p1Correct=new Set(rows.map((r,i)=>i*5+r.odd));
+  window.p1Selected=new Set();
+
+  const table=document.createElement('div');
+  table.className='portrait-table';
+  rows.forEach((row,ri)=>{
+    const rowEl=document.createElement('div');
+    rowEl.className='portrait-row';
+    const lbl=document.createElement('div');
+    lbl.className='row-label';
+    lbl.textContent=row.theme.toUpperCase();
+    rowEl.appendChild(lbl);
+    const tilesRow=document.createElement('div');
+    tilesRow.className='portrait-tiles-row';
+    row.items.forEach((item,ci)=>{
+      const idx=ri*5+ci;
+      const t=document.createElement('div');
+      t.className='portrait-tile';
+      t.innerHTML=item.replace(' ','<br>');
+      t.dataset.idx=idx;
+      t.onclick=()=>togglePortrait(t,idx);
+      tilesRow.appendChild(t);
+    });
+    rowEl.appendChild(tilesRow);
+    table.appendChild(rowEl);
+  });
+  wrap.appendChild(table);
+
+  const counter=document.createElement('div');
+  counter.id='p1counter';
+  counter.style.cssText='font-family:VT323,monospace;color:var(--glow);font-size:1rem;letter-spacing:.2em;margin:1rem 0 .5rem';
+  counter.textContent='IMPOSTORS FOUND: 0 / 5';
+  wrap.appendChild(counter);
+
+  const act=document.createElement('div');
+  act.className='action-row';
+  act.innerHTML='<button class="btn-sm" onclick="checkPortrait()">Reveal the Impostors</button>';
+  wrap.appendChild(act);
+}
+function togglePortrait(tile,idx){
+  if(tile.classList.contains('selected')){tile.classList.remove('selected');window.p1Selected.delete(idx);}
+  else{tile.classList.add('selected');window.p1Selected.add(idx);}
+  const found=[...window.p1Selected].filter(i=>window.p1Correct.has(i)).length;
+  document.getElementById('p1counter').textContent=`IMPOSTORS FOUND: ${found} / 5`;
+}
+function checkPortrait(){
+  recAtt();
+  const sel=window.p1Selected,cor=window.p1Correct;
+  if(sel.size<5){fb('Select one impostor from each of the five groups.','bad');return;}
+  if(sel.size>5){fb('Too many selected — choose only five, one per group.','bad');return;}
+  if([...sel].every(i=>cor.has(i))){
+    document.querySelectorAll('.portrait-tile').forEach(t=>{if(cor.has(+t.dataset.idx))t.classList.add('highlight');});
+    fb('✓ All five impostors unmasked. The gallery seal breaks.','ok');
+    setTimeout(markSolved,900);
+  } else {
+    const bad=[...sel].find(i=>!cor.has(i));
+    const bt=document.querySelector(`[data-idx="${bad}"]`);
+    if(bt){bt.classList.add('wrong-flash');setTimeout(()=>bt.classList.remove('wrong-flash'),500);}
+    fb('✗ At least one choice does not truly belong. Look more carefully.','bad');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PUZZLE 2 — THE WHISPER CIPHER
+//  5-letter word FIFTH encoded by shifting each letter +5
+//  F→K  I→N  F→K  T→Y  H→M  →  KNKYM
+//  Player must decode it by shifting each letter back 5.
+// ═══════════════════════════════════════════════════════════════
+function renderCipher(wrap){
+  wrap.innerHTML=`
+    <div class="puzzle-num">CHAMBER II OF V</div>
+    <div class="puzzle-title">The Whisper Cipher</div>
+    <div class="puzzle-flavor">
+      On Aldric's writing desk lies a coded message. His journal reads:
+      <em>"I advance every letter by five to keep my secrets safe. 
+      Reverse my method and you shall hear the truth."</em>
+    </div>
+    <div class="cipher-box">
+      The encoded word on the paper reads:<br><br>
+      <span class="encoded-word">K &nbsp;&nbsp; N &nbsp;&nbsp; K &nbsp;&nbsp; Y &nbsp;&nbsp; M</span>
+      <br><br><small style="color:#5a3a20;font-size:.85rem">Each letter was shifted <strong style="color:var(--glow)">+5 forward</strong> in the alphabet</small>
+    </div>
+    <p style="font-style:italic;color:var(--faded);font-size:.95rem;margin-bottom:1rem">Shift each letter <em>back</em> by five to decode the hidden word, then type it below:</p>
+    <div class="action-row" style="margin-top:0">
+      <input type="text" class="parchment-input" id="cipher-input" maxlength="10" placeholder="_ _ _ _ _" style="text-transform:uppercase;width:180px" onkeydown="if(event.key==='Enter')checkCipher()">
+      <button class="btn-sm" onclick="checkCipher()">Decode</button>
+    </div>
+    <div class="ref-grid">
+      <div style="font-family:VT323,monospace;font-size:.72rem;color:#5a3a20;letter-spacing:.2em;margin-bottom:.4rem">ALPHABET — ORIGINAL → SHIFTED +5</div>
+      <div>A B C D E → F G H I J</div>
+      <div>F G H I J → K L M N O</div>
+      <div>K L M N O → P Q R S T</div>
+      <div>P Q R S T → U V W X Y</div>
+      <div>U V W X Y Z → Z A B C D E</div>
+    </div>`;
+}
+function checkCipher(){
+  recAtt();
+  const val=document.getElementById('cipher-input').value.toUpperCase().trim();
+  if(val==='FIFTH'){fb('✓ FIFTH — the word that was always the answer. The cipher seal breaks.','ok');setTimeout(markSolved,900);}
+  else if(val.length<5){fb('✗ The decoded word has five letters. Try again.','bad');}
+  else{fb(`✗ "${val}" is not correct. Shift each of the five letters back by five positions.`,'bad');}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PUZZLE 3 — THE RAVEN'S STUDY (hidden objects scene)
+//  Click 5 objects in the study that each represent the number 5
+// ═══════════════════════════════════════════════════════════════
+function renderRaven(wrap){
+  wrap.innerHTML=`
+    <div class="puzzle-num">CHAMBER III OF V</div>
+    <div class="puzzle-title">The Raven's Study</div>
+    <div class="puzzle-flavor">
+      Aldric's study is cluttered with curiosities. Hidden among them are 
+      <strong style="color:var(--glow)">five objects</strong> — each one secretly embodies the number five.
+      Spot them all and click to reveal them.
+    </div>
+    <div class="found-count" id="found-count">FOUND: 0 / 5</div>`;
+
+  const sceneWrap=document.createElement('div');
+  sceneWrap.className='scene-wrap';
+  sceneWrap.style.cssText='max-width:560px;aspect-ratio:14/9';
+  sceneWrap.innerHTML=`<svg viewBox="0 0 560 360" xmlns="http://www.w3.org/2000/svg">
+    <rect width="560" height="360" fill="#0e0a06"/>
+    <rect x="0" y="270" width="560" height="90" fill="#1a1006"/>
+    <rect x="0" y="0" width="560" height="270" fill="#130e08"/>
+    <line x1="0" y1="90" x2="560" y2="90" stroke="#1f170a" stroke-width="1"/>
+    <line x1="0" y1="180" x2="560" y2="180" stroke="#1f170a" stroke-width="1"/>
+    <!-- bookshelf -->
+    <rect x="10" y="30" width="95" height="230" fill="#2a1a08"/>
+    <rect x="14" y="34" width="87" height="16" fill="#3a1a04"/><rect x="14" y="56" width="87" height="16" fill="#2a1804"/>
+    <rect x="14" y="78" width="87" height="16" fill="#3a1a04"/><rect x="14" y="100" width="87" height="16" fill="#2a1804"/>
+    <rect x="14" y="122" width="87" height="16" fill="#3a1a04"/><rect x="14" y="144" width="87" height="16" fill="#2a1804"/>
+    <rect x="14" y="166" width="87" height="16" fill="#3a1a04"/><rect x="14" y="188" width="87" height="16" fill="#2a1804"/>
+    <rect x="14" y="210" width="87" height="16" fill="#3a1a04"/>
+    <!-- desk -->
+    <rect x="155" y="210" width="260" height="16" fill="#3a2008" rx="2"/>
+    <rect x="168" y="226" width="12" height="44" fill="#2a1808"/>
+    <rect x="390" y="226" width="12" height="44" fill="#2a1808"/>
+    <!-- FIVE-CANDLE candelabra -->
+    <rect x="263" y="174" width="34" height="8" fill="#4a3018" rx="2"/>
+    <rect x="266" y="152" width="5" height="22" fill="#e8e0c8"/>
+    <rect x="275" y="148" width="5" height="26" fill="#e8e0c8"/>
+    <rect x="284" y="152" width="5" height="22" fill="#e8e0c8"/>
+    <rect x="257" y="155" width="5" height="19" fill="#e8e0c8"/>
+    <rect x="293" y="155" width="5" height="19" fill="#e8e0c8"/>
+    <ellipse cx="268" cy="151" rx="2.5" ry="5" fill="#f0a020" opacity=".9"/>
+    <ellipse cx="277" cy="147" rx="2.5" ry="5" fill="#f5b030" opacity=".9"/>
+    <ellipse cx="286" cy="151" rx="2.5" ry="5" fill="#f0a020" opacity=".9"/>
+    <ellipse cx="259" cy="154" rx="2" ry="4" fill="#f0a020" opacity=".8"/>
+    <ellipse cx="295" cy="154" rx="2" ry="4" fill="#f0a020" opacity=".8"/>
+    <text x="275" y="200" text-anchor="middle" font-size="8" fill="#3a2010" font-family="serif" font-style="italic">candelabra</text>
+    <!-- PENTAGRAM on wall -->
+    <polygon points="430,55 468,112 408,76 452,76 390,112" fill="none" stroke="#4a3018" stroke-width="1.8"/>
+    <circle cx="430" cy="85" r="42" fill="none" stroke="#3a2010" stroke-width=".8"/>
+    <text x="430" y="140" text-anchor="middle" font-size="8" fill="#3a2010" font-family="serif" font-style="italic">pentagram</text>
+    <!-- FIVE-PETAL ROSE corner -->
+    <circle cx="500" cy="240" r="11" fill="#4a1010"/>
+    <ellipse cx="500" cy="228" rx="5" ry="8" fill="#7a1820"/>
+    <ellipse cx="511" cy="235" rx="5" ry="8" fill="#7a1820" transform="rotate(72 511 235)"/>
+    <ellipse cx="507" cy="249" rx="5" ry="8" fill="#7a1820" transform="rotate(144 507 249)"/>
+    <ellipse cx="493" cy="249" rx="5" ry="8" fill="#7a1820" transform="rotate(216 493 249)"/>
+    <ellipse cx="489" cy="235" rx="5" ry="8" fill="#7a1820" transform="rotate(288 489 235)"/>
+    <text x="500" y="268" text-anchor="middle" font-size="8" fill="#3a2010" font-family="serif" font-style="italic">five-petal rose</text>
+    <!-- FIVE-DOT DIE on desk -->
+    <rect x="345" y="194" width="26" height="26" fill="#d8c8a0" rx="3"/>
+    <circle cx="350" cy="199" r="2" fill="#2a1a06"/>
+    <circle cx="366" cy="199" r="2" fill="#2a1a06"/>
+    <circle cx="358" cy="207" r="2" fill="#2a1a06"/>
+    <circle cx="350" cy="215" r="2" fill="#2a1a06"/>
+    <circle cx="366" cy="215" r="2" fill="#2a1a06"/>
+    <text x="358" y="232" text-anchor="middle" font-size="8" fill="#3a2010" font-family="serif" font-style="italic">die: five</text>
+    <!-- HAND (5 fingers) on paper -->
+    <rect x="188" y="192" width="48" height="22" fill="#2a1a06" rx="2"/>
+    <rect x="193" y="182" width="6" height="14" fill="#c4a070" rx="3"/>
+    <rect x="201" y="178" width="6" height="18" fill="#c4a070" rx="3"/>
+    <rect x="209" y="179" width="6" height="17" fill="#c4a070" rx="3"/>
+    <rect x="217" y="181" width="6" height="15" fill="#c4a070" rx="3"/>
+    <rect x="225" y="186" width="5" height="11" fill="#c4a070" rx="3"/>
+    <rect x="190" y="192" width="42" height="16" fill="#c4a070" rx="2"/>
+    <text x="212" y="228" text-anchor="middle" font-size="8" fill="#3a2010" font-family="serif" font-style="italic">five fingers</text>
+    <!-- window -->
+    <rect x="450" y="30" width="80" height="120" fill="#080c14" rx="3"/>
+    <line x1="490" y1="34" x2="490" y2="146" stroke="#3a2010" stroke-width="2"/>
+    <line x1="454" y1="92" x2="526" y2="92" stroke="#3a2010" stroke-width="2"/>
+  </svg>`;
+
+  // Hotspots
+  const hs=[
+    {id:'hs0',label:'Five-Candle Candelabra',l:'44%',t:'38%',w:'12%',h:'28%',why:'Five candles, five flames'},
+    {id:'hs1',label:'Pentagram on the Wall',l:'67%',t:'8%',w:'16%',h:'30%',why:'A five-pointed star'},
+    {id:'hs2',label:'Five-Petal Rose',l:'84%',t:'58%',w:'10%',h:'20%',why:'A rose has five petals'},
+    {id:'hs3',label:'Die Showing Five',l:'60%',t:'52%',w:'8%',h:'18%',why:'Five dots on the die face'},
+    {id:'hs4',label:'Hand with Five Fingers',l:'31%',t:'48%',w:'10%',h:'22%',why:'Five fingers on a hand'},
+  ];
+  window.p3Found=new Set();
+  hs.forEach(h=>{
+    const div=document.createElement('div');
+    div.className='hotspot';
+    div.style.left=h.l; div.style.top=h.t; div.style.width=h.w; div.style.height=h.h;
+    div.onclick=()=>{
+      if(div.classList.contains('found'))return;
+      div.classList.add('found');
+      window.p3Found.add(h.id);
+      const n=window.p3Found.size;
+      document.getElementById('found-count').textContent=`FOUND: ${n} / 5`;
+      fb(`✓ ${h.label} — ${h.why}`,'ok');
+      if(n===5){fb('✓ All five objects of five discovered. The Raven\'s seal breaks!','ok');setTimeout(markSolved,1000);}
+    };
+    sceneWrap.appendChild(div);
+  });
+  wrap.appendChild(sceneWrap);
+  wrap.insertAdjacentHTML('beforeend','<p style="font-style:italic;color:#5a3a20;font-size:.88rem;margin-top:.6rem">Click on objects that represent or embody the number five.</p>');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PUZZLE 4 — THE FORGOTTEN LIBRARY
+//  5 books must be ordered so their initials spell Q-U-I-N-T
+// ═══════════════════════════════════════════════════════════════
+function renderLibrary(wrap){
+  wrap.innerHTML=`
+    <div class="puzzle-num">CHAMBER IV OF V</div>
+    <div class="puzzle-title">The Forgotten Library</div>
+    <div class="puzzle-flavor">
+      The inscription above the shelf reads: <em>"Arrange my books so their opening letters 
+      speak the Latin name for five — then the seal shall yield."</em>
+    </div>
+    <div class="story-panel">
+      The Latin word for five is <strong style="color:var(--glow)">QUINT</strong>.
+      Click the five books below in the correct order so their titles begin Q · U · I · N · T.
+    </div>`;
+
+  const books=[
+    {id:'Q',title:'Quintessence Found',color:'#3a2060',text:'#c0b0e8'},
+    {id:'U',title:'Umbral Secrets',color:'#1a3a4a',text:'#90c8d8'},
+    {id:'I',title:'Infernal Codex',color:'#3a2a10',text:'#d8b870'},
+    {id:'N',title:'Nocturnal Alchemy',color:'#5a2020',text:'#e8a090'},
+    {id:'T',title:'Tides of Aether',color:'#1a3820',text:'#90c890'},
+  ];
+  const shuffled=[...books].sort(()=>Math.random()-.5);
+  window.p4Order=[]; window.p4Books=books;
+
+  const slotLabel=document.createElement('div');
+  slotLabel.style.cssText='font-family:VT323,monospace;font-size:.82rem;color:#5a3a20;letter-spacing:.2em;margin-bottom:.4rem';
+  slotLabel.textContent='YOUR ORDER (click a slot to remove):';
+  wrap.appendChild(slotLabel);
+
+  const slotsRow=document.createElement('div');
+  slotsRow.className='order-display'; slotsRow.id='order-slots';
+  const posLabels=['1st','2nd','3rd','4th','5th'];
+  for(let i=0;i<5;i++){
+    const sl=document.createElement('div');
+    sl.className='order-slot'; sl.id=`slot-${i}`;
+    sl.innerHTML=`<span style="font-size:.65rem;color:#3a2a15">${posLabels[i]}</span>`;
+    sl.dataset.pos=i; sl.onclick=()=>removeSlot(i);
+    slotsRow.appendChild(sl);
+  }
+  wrap.appendChild(slotsRow);
+
+  const shelf=document.createElement('div'); shelf.className='bookshelf'; shelf.id='bookshelf';
+  shuffled.forEach(b=>{
+    const el=document.createElement('div');
+    el.className='book'; el.id=`book-${b.id}`; el.style.background=b.color; el.dataset.bookId=b.id;
+    const sp=document.createElement('span'); sp.style.color=b.text; sp.textContent=b.title;
+    el.appendChild(sp); el.onclick=()=>selectBook(b.id); shelf.appendChild(el);
+  });
+  wrap.appendChild(shelf);
+
+  const act=document.createElement('div'); act.className='action-row';
+  act.innerHTML='<button class="btn-sm" onclick="checkLibrary()">Lock in Order</button><button class="btn-sm" onclick="clearLibrary()">Clear All</button>';
+  wrap.appendChild(act);
+}
+function selectBook(id){
+  if(window.p4Order.includes(id)||window.p4Order.length>=5)return;
+  window.p4Order.push(id);
+  const pos=window.p4Order.length-1;
+  const slot=document.getElementById(`slot-${pos}`);
+  slot.textContent=id; slot.classList.add('filled');
+  document.getElementById(`book-${id}`).classList.add('selected-book');
+}
+function removeSlot(pos){
+  for(let i=pos;i<window.p4Order.length;i++){
+    document.getElementById(`book-${window.p4Order[i]}`).classList.remove('selected-book');
+    const sl=document.getElementById(`slot-${i}`);
+    sl.textContent=['1st','2nd','3rd','4th','5th'][i];
+    sl.style.fontSize='.65rem'; sl.style.color='#3a2a15';
+    sl.classList.remove('filled');
+  }
+  window.p4Order.splice(pos);
+}
+function clearLibrary(){
+  window.p4Order=[];
+  for(let i=0;i<5;i++){
+    const sl=document.getElementById(`slot-${i}`);
+    if(sl){sl.innerHTML=`<span style="font-size:.65rem;color:#3a2a15">${['1st','2nd','3rd','4th','5th'][i]}</span>`;sl.classList.remove('filled');}
+  }
+  document.querySelectorAll('.book').forEach(b=>b.classList.remove('selected-book'));
+}
+function checkLibrary(){
+  recAtt();
+  if(window.p4Order.length<5){fb('Place all five books in the slots first.','bad');return;}
+  const word=window.p4Order.join('');
+  if(word==='QUINT'){fb('✓ Q·U·I·N·T — "QUINT", Latin for five. The library seal breaks!','ok');setTimeout(markSolved,900);}
+  else{
+    fb(`✗ "${word}" — The first letters must spell QUINT. Try a different order.`,'bad');
+    document.querySelectorAll('.book').forEach(b=>{b.classList.add('wrong-book');setTimeout(()=>b.classList.remove('wrong-book'),500);});
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PUZZLE 5 — THE FINAL DOOR (Olympic Rings order)
+//  Tap the 5 coloured rings in the correct left-to-right order:
+//  Blue → Yellow → Black → Green → Red
+// ═══════════════════════════════════════════════════════════════
+function renderDoor(wrap){
+  wrap.innerHTML=`
+    <div class="puzzle-num">CHAMBER V OF V — THE FINAL DOOR</div>
+    <div class="puzzle-title">The Last Door</div>
+    <div class="puzzle-flavor">
+      The door to freedom bears five interlocked rings — the symbol of the world's five continents united.
+      The inscription reads: <em>"Honour the rings in the order they appear, left to right, as the world has always known them."</em>
+    </div>
+    <div class="story-panel">
+      Tap the five rings in the correct sequence.<br>
+      <small style="color:#9a7a50">Think about the five Olympic rings and their left-to-right order.</small>
+    </div>`;
+
+  const rings=[
+    {id:'blue',  color:'#2060c8',label:'Blue'  },
+    {id:'yellow',color:'#c8a820',label:'Yellow'},
+    {id:'black', color:'#505050',label:'Black' },
+    {id:'green', color:'#208848',label:'Green' },
+    {id:'red',   color:'#c82020',label:'Red'   },
+  ];
+  const shuffled=[...rings].sort(()=>Math.random()-.5);
+  window.p5Seq=[]; window.p5Ans=['blue','yellow','black','green','red'];
+
+  // Sequence slots
+  const slotsWrap=document.createElement('div'); slotsWrap.className='door-slots'; slotsWrap.id='door-slots';
+  for(let i=0;i<5;i++){
+    const sl=document.createElement('div'); sl.className='door-slot'; sl.id=`dslot-${i}`;
+    sl.textContent=i+1; slotsWrap.appendChild(sl);
+  }
+  wrap.appendChild(slotsWrap);
+
+  const ringRow=document.createElement('div'); ringRow.className='door-symbols';
+  shuffled.forEach(r=>{
+    const sym=document.createElement('div');
+    sym.className='door-sym'; sym.id=`ring-${r.id}`; sym.dataset.ringId=r.id;
+    sym.style.borderColor=r.color; sym.style.color=r.color;
+    sym.innerHTML=`<svg viewBox="0 0 44 44" width="40" height="40"><circle cx="22" cy="22" r="15" fill="none" stroke="${r.color}" stroke-width="6"/></svg>`;
+    sym.title=r.label;
+    sym.onclick=()=>pressRing(r.id,r.color,r.label);
+    ringRow.appendChild(sym);
+  });
+  wrap.appendChild(ringRow);
+
+  const act=document.createElement('div'); act.className='action-row';
+  act.innerHTML='<button class="btn-sm" onclick="clearRings()">Reset Order</button>';
+  wrap.appendChild(act);
+}
+function pressRing(id,color,label){
+  if(window.p5Seq.includes(id)||window.p5Seq.length>=5)return;
+  const pos=window.p5Seq.length;
+  if(id!==window.p5Ans[pos]){
+    recAtt();
+    const el=document.getElementById(`ring-${id}`);
+    el.classList.add('door-wrong'); setTimeout(()=>el.classList.remove('door-wrong'),400);
+    fb(`✗ "${label}" is not the ${['1st','2nd','3rd','4th','5th'][pos]} ring. Resetting...`,'bad');
+    setTimeout(clearRings,700); return;
+  }
+  window.p5Seq.push(id);
+  const sl=document.getElementById(`dslot-${pos}`);
+  sl.style.borderColor=color; sl.style.boxShadow=`0 0 10px ${color}66`;
+  sl.innerHTML=`<svg viewBox="0 0 44 44" width="32" height="32"><circle cx="22" cy="22" r="13" fill="none" stroke="${color}" stroke-width="5"/></svg>`;
+  sl.classList.add('glowing');
+  document.getElementById(`ring-${id}`).classList.add('door-on');
+  if(window.p5Seq.length===5){
+    recAtt();
+    fb('✓ Blue · Yellow · Black · Green · Red — The door opens. You are free!','ok');
+    setTimeout(markSolved,1100);
+  }
+}
+function clearRings(){
+  window.p5Seq=[];
+  for(let i=0;i<5;i++){
+    const sl=document.getElementById(`dslot-${i}`);
+    if(sl){sl.innerHTML=i+1;sl.style.borderColor='';sl.style.boxShadow='';sl.style.color='#3a2a15';sl.classList.remove('glowing');}
+  }
+  document.querySelectorAll('.door-sym').forEach(s=>s.classList.remove('door-on','door-wrong'));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FINISH
+// ═══════════════════════════════════════════════════════════════
+function finishGame(){
+  clearInterval(timerInt);
+  const elapsed=480-timerSec, m=Math.floor(elapsed/60), s=elapsed%60;
+  show('win-screen');
+  document.getElementById('win-stats').innerHTML=`
+    <div class="stat-item"><span class="val">V</span><span class="lbl">seals broken</span></div>
+    <div class="stat-item"><span class="val">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span><span class="lbl">time elapsed</span></div>
+    <div class="stat-item"><span class="val">${totalAtt}</span><span class="lbl">total attempts</span></div>
+    <div class="stat-item"><span class="val">${hintsUsed.filter(Boolean).length}</span><span class="lbl">ghosts consulted</span></div>`;
+  const ul=document.getElementById('lore-list'); ul.innerHTML='';
+  LORE.forEach(l=>{const li=document.createElement('li');li.textContent=l;ul.appendChild(li);});
+}
+</script>
+
+<!-- MUSIC PLAYER -->
+<div id="music-player">
+  <span class="music-icon" id="music-icon">♪</span>
+  <span class="music-label" id="music-label">Chamber Music</span>
+  <button class="music-btn" id="music-toggle" onclick="toggleMusic()" title="Play/Pause">▶</button>
+  <input type="range" id="music-vol" min="0" max="1" step="0.05" value="0.35" oninput="setVolume(this.value)" title="Volume">
+  <button class="music-btn" id="music-mute" onclick="toggleMute()" title="Mute">🔊</button>
+</div>
+
+<script>
+// Royalty-free mystery tracks from soundimage.org by Eric Matyas
+const TRACKS = [
+  { url: 'https://soundimage.org/wp-content/uploads/2019/10/Welcome-to-the-Mansion.mp3', title: 'Welcome to the Mansion' },
+  { url: 'https://soundimage.org/wp-content/uploads/2019/10/Shattered-Reality.mp3',      title: 'Shattered Reality' },
+  { url: 'https://soundimage.org/wp-content/uploads/2019/10/Shattered-Mind.mp3',         title: 'Shattered Mind' },
+];
+let trackIdx = 0, bgAudio = null, isMuted = false, hasStarted = false;
+
+function initAudio() {
+  if (bgAudio) return;
+  bgAudio = new Audio();
+  bgAudio.volume = 0.35;
+  bgAudio.preload = 'auto';
+  bgAudio.addEventListener('ended', advanceTrack);
+  bgAudio.addEventListener('error', () => setTimeout(advanceTrack, 800));
+  setTrack(0);
+}
+
+function setTrack(idx) {
+  trackIdx = idx;
+  bgAudio.src = TRACKS[idx].url;
+  document.getElementById('music-label').textContent = TRACKS[idx].title;
+}
+
+function advanceTrack() {
+  setTrack((trackIdx + 1) % TRACKS.length);
+  bgAudio.play().catch(() => {});
+}
+
+function toggleMusic() {
+  initAudio();
+  hasStarted = true;
+  if (bgAudio.paused) {
+    bgAudio.play().then(() => {
+      document.getElementById('music-toggle').textContent = '⏸';
+      document.getElementById('music-icon').classList.add('playing');
+    }).catch(e => {
+      document.getElementById('music-label').textContent = 'Blocked — try again';
+    });
+  } else {
+    bgAudio.pause();
+    document.getElementById('music-toggle').textContent = '▶';
+    document.getElementById('music-icon').classList.remove('playing');
+  }
+}
+
+function setVolume(val) {
+  initAudio();
+  bgAudio.volume = parseFloat(val);
+  bgAudio.muted = false;
+  isMuted = false;
+  document.getElementById('music-mute').textContent = '🔊';
+}
+
+function toggleMute() {
+  initAudio();
+  isMuted = !isMuted;
+  bgAudio.muted = isMuted;
+  document.getElementById('music-mute').textContent = isMuted ? '🔇' : '🔊';
+}
+
+// Browsers require a real user gesture — trigger on first interaction
+function firstPlay() {
+  if (hasStarted) return;
+  hasStarted = true;
+  initAudio();
+  bgAudio.play().then(() => {
+    document.getElementById('music-toggle').textContent = '⏸';
+    document.getElementById('music-icon').classList.add('playing');
+  }).catch(() => {});
+}
+document.addEventListener('click',   firstPlay, { once: true });
+document.addEventListener('keydown', firstPlay, { once: true });
+window.addEventListener('load', initAudio);
+</script>
+</body>
+</html>
